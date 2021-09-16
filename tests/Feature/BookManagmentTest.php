@@ -6,21 +6,24 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use App\Models\Book;
 
-class BookReservationTest extends TestCase
+class BookManagmentTest extends TestCase
 {
     use RefreshDatabase;
 
     /** @test */
     public function a_book_can_be_added_to_the_library() 
     {
-        $this->withoutExceptionHandling(); //Disables Laravel Exception Handling
+        //$this->withoutExceptionHandling(); //Disables Laravel Exception Handling
         $response = $this->post('/books', [
             'title' => 'Cool Book Title',
             'author' => 'Clement Omiwale'
         ]);
 
-        $response->assertOk();
+        $book = Book::first();
+
+        //$response->assertOk();
         $this->assertCount(1, Book::all());
+        $response->assertRedirect($book->path());
     }
 
     /** @test */
@@ -50,7 +53,7 @@ class BookReservationTest extends TestCase
     /** @test */
     public function a_book_can_be_updated() 
     {
-        $this->withoutExceptionHandling(); //Disables Laravel Exception Handling
+        //$this->withoutExceptionHandling(); //Disables Laravel Exception Handling
         $this->post('/books', [
             'title' => 'Cool Book Title',
             'author' => 'Clement Omiwale'
@@ -58,7 +61,7 @@ class BookReservationTest extends TestCase
 
         $book = Book::first();
 
-        $response = $this->patch('/books/'.$book->id, [
+        $response = $this->patch($book->path(), [
             'title' => 'New Title',
             'author' => 'New Author'
         ]);
@@ -66,5 +69,22 @@ class BookReservationTest extends TestCase
         //$response->assertOk();
         $this->assertEquals('New Title', Book::first()->title);
         $this->assertEquals('New Author', Book::first()->author);
+        $response->assertRedirect($book->fresh()->path());
+    }
+
+    /** @test */
+    public function a_book_can_be_deleted() 
+    {
+        //$this->withoutExceptionHandling();
+        $this->post('/books', [
+            'title' => 'Cool Book Title',
+            'author' => 'Clement Omiwale'
+        ]);
+
+        $book = Book::first();
+        $this->assertCount(1, Book::all());
+        $response = $this->delete('/books/'.$book->id);
+        $this->assertCount(0, Book::all());
+        $response->assertRedirect('/books');
     }
 }
